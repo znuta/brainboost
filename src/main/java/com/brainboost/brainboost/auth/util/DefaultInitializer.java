@@ -52,6 +52,9 @@ public class DefaultInitializer implements
 
     @Value("${super.admin.username}")
     private String userName;
+
+    @Value("${super.admin.password}")
+    private String password;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -60,7 +63,7 @@ public class DefaultInitializer implements
     @SneakyThrows
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        Optional<AppUser> userOptional = userRepository.findByUserName(userName);
+        Optional<AppUser> userOptional = userRepository.findByEmail(email);
         if(userOptional.isPresent()){
             return;
         }
@@ -69,9 +72,10 @@ public class DefaultInitializer implements
         user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
+        user.setUserName(email);
         user.setLastLoginDate(new Date());
         user.setActive(true);
-        user.setPassword(passwordEncoder.encode("superadmin"));
+        user.setPassword(passwordEncoder.encode(password));
         user.setActive(true);
         user.setStatus("A");
 

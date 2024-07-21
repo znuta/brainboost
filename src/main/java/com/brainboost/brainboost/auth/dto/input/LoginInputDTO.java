@@ -16,8 +16,8 @@ import lombok.Data;
 @Data
 public class LoginInputDTO {
 
-    @NotNull(message = "{user.username.notEmpty}", groups = First.class)
-    private String username;
+    @NotNull(message = "uswer not found", groups = First.class)
+    private String email;
 
     @NotNull(message = "{user.password.notEmpty}", groups = First.class)
     @Size(min = 8, max = 150, message = "{user.password.sizeError}", groups = Second.class)

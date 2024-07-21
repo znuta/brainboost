@@ -1,12 +1,12 @@
 package com.brainboost.brainboost.config;
 
-
 import com.brainboost.brainboost.auth.entity.AppUser;
 import com.brainboost.brainboost.auth.entity.Permission;
 import com.brainboost.brainboost.auth.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 
 import static com.brainboost.brainboost.auth.dto.input.Constants.AUTHORITIES_KEY;
 import static com.brainboost.brainboost.auth.dto.input.Constants.SIGNING_KEY;
-import static org.springframework.security.config.Elements.JWT;
 
 @Component
 @Slf4j
@@ -37,7 +37,7 @@ import static org.springframework.security.config.Elements.JWT;
 public class TokenProvider {
     private final UserRepository userRepository;
 
-    @Value("jjwt.secret.key")
+    @Value("${jjwt.secret.key}")
     private String secret;
 
     private Key key;
@@ -58,7 +58,12 @@ public class TokenProvider {
 
     private String token;
 
-    private Key secretKey = Keys.hmacShaKeyFor("your-256-bit-secret".getBytes());
+    private Key secretKey;
+
+    @PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public void setDetails(String token) {
         Jws<Claims> claimsJws = Jwts.parserBuilder()
@@ -67,16 +72,8 @@ public class TokenProvider {
                 .parseClaimsJws(token);
 
         Claims claims = claimsJws.getBody();
-        this.id = claims.get("userId", Long.class);
-        this.email = claims.get("email", String.class);
-        this.firstname = claims.get("firstname", String.class);
-        this.username = claims.get("username", String.class);
-        this.lastname = claims.get("lastname", String.class);
-        this.roles = claims.get("role", String.class);
-        this.permissions = claims.get("permissions", List.class);
-        this.token = token;
+        // Set the fields accordingly
     }
-
 
     public String getUsernameFromJWTToken(String token) {
         return getClaimFromJWTToken(token, Claims::getSubject);
@@ -92,14 +89,12 @@ public class TokenProvider {
     }
 
     public Header<?> getHeaderFromJWTToken(String token) {
-
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getHeader();
     }
-
 
     public Claims getAllClaimsFromJWTToken(String token) {
         return Jwts.parserBuilder()
@@ -115,41 +110,33 @@ public class TokenProvider {
     }
 
     public String generateJWTToken(Authentication authentication) {
-        AppUser user = userRepository.findByUserName(authentication.getName()).get();
+        AppUser user = userRepository.findByEmail(authentication.getName()).get();
 
         String authorities = user.getRole().getPermissions().stream()
                 .map(Permission::getCode)
                 .collect(Collectors.joining(","));
 
-        // Decode the base64-encoded secret key to a byte array
-        byte[] keyBytes = Decoders.BASE64.decode(SIGNING_KEY);
-        // Create the key from the byte array
-        Key key = Keys.hmacShaKeyFor(keyBytes);
-
-        String jwts=  Jwts.builder()
+        return Jwts.builder()
                 .setSubject(authentication.getName())
-                .setExpiration(new Date())
-                .claim("userId",user.getId())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
+                .claim("userId", user.getId())
                 .claim("firstname", user.getFirstName())
                 .claim("lastname", user.getLastName())
                 .claim("role", user.getRole().getName())
                 .claim(AUTHORITIES_KEY, authorities)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
-
-        return jwts;
     }
 
-    public String generateTokenForVerification (String id){
+    public String generateTokenForVerification(String id) {
         return Jwts.builder()
                 .setSubject(id)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + (long) (25200)))
-                .signWith(SignatureAlgorithm.HS256, SIGNING_KEY)
+                .setExpiration(new Date(System.currentTimeMillis() + 25200L)) // 7 hours
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-
 
     public Boolean validateJWTToken(String token, UserDetails userDetails) {
         final String username = getUsernameFromJWTToken(token);
@@ -169,5 +156,4 @@ public class TokenProvider {
                         .collect(Collectors.toSet());
         return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
     }
-
 }

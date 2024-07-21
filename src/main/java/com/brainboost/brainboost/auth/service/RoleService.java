@@ -131,12 +131,12 @@ public class RoleService {
 
     }
 
-    public BasicResponseDTO searchRoles(String pattern, int pageNo, int pageSize) {
+    public BasicResponseDTO searchRoles(String name, int pageNo, int pageSize) {
         try{
 
             Pageable pageable = PageRequest.of(pageNo,pageSize);
 
-            List<Roles> roles = rolesRepository.findUsingPattern(pattern,pageable).toList();
+            List<Roles> roles = rolesRepository.findByName(name,pageable).toList();
 
             return new BasicResponseDTO(Status.SUCCESS, roles);
         }catch (Exception ex) {

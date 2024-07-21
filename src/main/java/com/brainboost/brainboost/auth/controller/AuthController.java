@@ -13,7 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v1/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController extends Controller {
 
     private final UserService userService;
@@ -24,16 +24,14 @@ public class AuthController extends Controller {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
     }
-
-    @PostMapping("/add_user")
-    @PreAuthorize("hasAuthority('USER_MANAGEMENT')")
-    public BasicResponseDTO addNewUser(@RequestBody @Valid AddUserInputDTO dto, HttpServletRequest request) {
-        return updateHttpStatus(userService.addUser(dto,request));
-    }
-
     @PostMapping("/login")
     public LoginResponseDTO login(@RequestBody @Valid LoginInputDTO dto, HttpServletRequest request) throws Exception {
         return updateHttpStatus(userService.login(dto,authenticationManager,request));
+    }
+    @PostMapping("/add_user")
+    @PreAuthorize("hasAuthority('ADD_USER_PERMISSION')")
+    public BasicResponseDTO addNewUser(@RequestBody @Valid AddUserInputDTO dto, HttpServletRequest request) {
+        return updateHttpStatus(userService.addUser(dto,request));
     }
 
     @PatchMapping("/begin_reset_password")

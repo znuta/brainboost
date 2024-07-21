@@ -10,24 +10,28 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "app_user")
-@Where(clause ="del_Flag='N'" )
+@Where(clause = "del_Flag='N'")
 public class AppUser extends AbstractEntity {
 
     @Column(unique = true)
     protected String userName;
-    @Column(name="last_name")
+
+    @Column(name = "last_name")
     private String lastName;
 
-    @Column(name="first_name")
+    @Column(name = "first_name")
     private String firstName;
 
-    @Column(name="email")
+    @Column(name = "email")
     private String email;
+
     protected String phoneNumber;
+
     @JsonIgnore
     protected String password;
 
     protected String status;
+
     protected boolean active;
 
     @JsonIgnore
@@ -40,7 +44,7 @@ public class AppUser extends AbstractEntity {
     @JsonIgnore
     protected int otpCode;
 
-    @Column(name="role")
     @ManyToOne
+    @JoinColumn(name = "role_id") // Use @JoinColumn to specify the column mapping
     private Roles role;
 }

@@ -4,6 +4,7 @@ import com.brainboost.brainboost.auth.security.JwtRequestFilter;
 import com.brainboost.brainboost.auth.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,7 +23,7 @@ public class SecurityConfig {
 
     private final TokenProvider tokenProvider;
 
-    public SecurityConfig(UserService userService, TokenProvider tokenProvider) {
+    public SecurityConfig(@Lazy  UserService userService, TokenProvider tokenProvider) {
         this.userService = userService;
         this.tokenProvider = tokenProvider;
     }
@@ -42,8 +43,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/login").permitAll()
+             http
+                 .csrf().disable()
+                 .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/v1/auth/login").permitAll()
                 .anyRequest().authenticated()
 
         ).sessionManagement((session) -> session
