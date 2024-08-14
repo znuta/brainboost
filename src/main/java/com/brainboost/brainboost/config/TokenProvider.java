@@ -73,6 +73,14 @@ public class TokenProvider {
 
         Claims claims = claimsJws.getBody();
         // Set the fields accordingly
+        id = (Long) claims.get("userId");
+        this.email = claims.get("email").toString();
+        this.firstname = claims.get("firstname").toString();
+        this.username = claims.get("username").toString();
+        this.lastname = claims.get("lastname").toString();
+        this.roles = claims.get("role").toString();
+        this.permissions = (List<String>) claims.get("permissions");
+        this.token = token;
     }
 
     public String getUsernameFromJWTToken(String token) {

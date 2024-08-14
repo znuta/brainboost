@@ -28,6 +28,7 @@ public class AuthController extends Controller {
     public LoginResponseDTO login(@RequestBody @Valid LoginInputDTO dto, HttpServletRequest request) throws Exception {
         return updateHttpStatus(userService.login(dto,authenticationManager,request));
     }
+
     @PostMapping("/add_user")
     @PreAuthorize("hasAuthority('ADD_USER_PERMISSION')")
     public BasicResponseDTO addNewUser(@RequestBody @Valid AddUserInputDTO dto, HttpServletRequest request) {
